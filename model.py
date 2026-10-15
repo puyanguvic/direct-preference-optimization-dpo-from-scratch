@@ -310,8 +310,56 @@ def dpo_train_step(
 
     return updated_params, {"loss": float(loss)}
 
-# Step 19 - train_dpo (not yet solved)
-# TODO: implement
+# Step 19 - train_dpo
+import numpy as np
+
+def train_dpo(
+    params, pairs, ref_logprobs, beta, learning_rate,
+    num_steps, batch_size, rng=None
+):
+    if rng is None:
+        rng = np.random.default_rng()
+
+    current_params = {
+        key: np.array(value, copy=True)
+        for key, value in params.items()
+    }
+    history = []
+    n = len(pairs)
+
+    for step in range(num_steps):
+        indices = rng.choice(
+            n, size=batch_size, replace=batch_size > n
+        )
+
+        keys = [
+            "chosen_ids", "rejected_ids",
+            "chosen_mask", "rejected_mask",
+        ]
+        if "prompt" in pairs[0]:
+            keys.append("prompt")
+
+        batch = {
+            key: np.stack([pairs[i][key] for i in indices])
+            for key in keys
+        }
+
+        if isinstance(ref_logprobs, dict):
+            ref_batch = {
+                key: np.asarray(ref_logprobs[key])[indices]
+                for key in ("chosen", "rejected")
+            }
+        else:
+            ref_batch = [ref_logprobs[i] for i in indices]
+
+        current_params, metrics = dpo_train_step(
+            current_params, batch, ref_batch,
+            beta, learning_rate,
+        )
+
+        history.append({**metrics, "step": step})
+
+    return current_params, history
 
 # Step 20 - length_normalized_logprob (not yet solved)
 # TODO: implement
