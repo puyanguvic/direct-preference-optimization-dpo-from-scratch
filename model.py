@@ -207,8 +207,14 @@ def freeze_reference_logprobs(ref_params, pairs):
 
     return frozen
 
-# Step 14 - policy_reference_logratio (not yet solved)
-# TODO: implement
+# Step 14 - policy_reference_logratio
+import numpy as np
+
+def policy_reference_logratio(policy_logprobs, reference_logprobs):
+    policy_logprobs = np.asarray(policy_logprobs, dtype=np.float64)
+    reference_logprobs = np.asarray(reference_logprobs, dtype=np.float64)
+
+    return policy_logprobs - reference_logprobs
 
 # Step 15 - dpo_pair_margin (not yet solved)
 # TODO: implement
