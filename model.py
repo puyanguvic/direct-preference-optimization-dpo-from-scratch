@@ -229,8 +229,17 @@ def dpo_pair_margin(policy_logprob_chosen, policy_logprob_rejected, ref_logprob_
 
     return beta * (chosen_logratio - rejected_logratio)
 
-# Step 16 - dpo_loss (not yet solved)
-# TODO: implement
+# Step 16 - dpo_loss
+def dpo_loss(policy_logprob_chosen, policy_logprob_rejected, ref_logprob_chosen, ref_logprob_rejected, beta):
+    margins = dpo_pair_margin(
+        policy_logprob_chosen,
+        policy_logprob_rejected,
+        ref_logprob_chosen,
+        ref_logprob_rejected,
+        beta,
+    )
+
+    return float(np.mean(np.logaddexp(0.0, -margins)))
 
 # Step 17 - dpo_loss_grad (not yet solved)
 # TODO: implement
