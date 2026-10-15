@@ -241,8 +241,59 @@ def dpo_loss(policy_logprob_chosen, policy_logprob_rejected, ref_logprob_chosen,
 
     return float(np.mean(np.logaddexp(0.0, -margins)))
 
-# Step 17 - dpo_loss_grad (not yet solved)
-# TODO: implement
+# Step 17 - dpo_loss_grad
+import numpy as np
+
+def dpo_loss_grad(params, batch, ref_logprobs_batch, beta):
+    chosen_ids = np.asarray(batch["chosen_ids"], dtype=np.int64)
+    rejected_ids = np.asarray(batch["rejected_ids"], dtype=np.int64)
+    chosen_mask = np.asarray(batch["chosen_mask"])
+    rejected_mask = np.asarray(batch["rejected_mask"])
+    B = chosen_ids.shape[0]
+
+    # 支持字典形式的批次，也支持 freeze_reference_logprobs 返回的列表
+    if isinstance(ref_logprobs_batch, dict):
+        ref_chosen = np.asarray(ref_logprobs_batch["chosen"])
+        ref_rejected = np.asarray(ref_logprobs_batch["rejected"])
+    else:
+        ref_chosen = np.array([p["chosen"] for p in ref_logprobs_batch])
+        ref_rejected = np.array([p["rejected"] for p in ref_logprobs_batch])
+
+    policy_chosen = policy_sequence_logprob(
+        params, chosen_ids, chosen_mask
+    )
+    policy_rejected = policy_sequence_logprob(
+        params, rejected_ids, rejected_mask
+    )
+
+    margins = dpo_pair_margin(
+        policy_chosen, policy_rejected,
+        ref_chosen, ref_rejected, beta,
+    )
+    loss = float(np.mean(np.logaddexp(0.0, -margins)))
+
+    # 每个样本的系数：-beta * sigmoid(-margin) / B
+    coefficients = -beta * np.exp(-np.logaddexp(0.0, margins)) / B
+
+    grads = {
+        key: np.zeros_like(params[key])
+        for key in ("embed", "W_out", "b_out")
+    }
+
+    for i in range(B):
+        grad_chosen = sequence_logprob_grad(
+            params, chosen_ids[i:i+1], chosen_mask[i:i+1]
+        )
+        grad_rejected = sequence_logprob_grad(
+            params, rejected_ids[i:i+1], rejected_mask[i:i+1]
+        )
+
+        for key in grads:
+            grads[key] += coefficients[i] * (
+                grad_chosen[key] - grad_rejected[key]
+            )
+
+    return loss, grads
 
 # Step 18 - dpo_train_step (not yet solved)
 # TODO: implement
