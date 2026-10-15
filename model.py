@@ -216,8 +216,18 @@ def policy_reference_logratio(policy_logprobs, reference_logprobs):
 
     return policy_logprobs - reference_logprobs
 
-# Step 15 - dpo_pair_margin (not yet solved)
-# TODO: implement
+# Step 15 - dpo_pair_margin
+def dpo_pair_margin(policy_logprob_chosen, policy_logprob_rejected, ref_logprob_chosen, ref_logprob_rejected, beta):
+    chosen_logratio = (
+        np.asarray(policy_logprob_chosen, dtype=np.float64)
+        - np.asarray(ref_logprob_chosen, dtype=np.float64)
+    )
+    rejected_logratio = (
+        np.asarray(policy_logprob_rejected, dtype=np.float64)
+        - np.asarray(ref_logprob_rejected, dtype=np.float64)
+    )
+
+    return beta * (chosen_logratio - rejected_logratio)
 
 # Step 16 - dpo_loss (not yet solved)
 # TODO: implement
