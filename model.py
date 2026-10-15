@@ -126,8 +126,13 @@ def sequence_logprob_grad(params, token_ids, mask):
         "b_out": grad_b_out,
     }
 
-# Step 9 - bradley_terry_loss (not yet solved)
-# TODO: implement
+# Step 9 - bradley_terry_loss
+def bradley_terry_loss(reward_chosen, reward_rejected):
+    reward_chosen = np.asarray(reward_chosen, dtype=np.float64)
+    reward_rejected = np.asarray(reward_rejected, dtype=np.float64)
+
+    margins = reward_chosen - reward_rejected
+    return float(np.mean(np.logaddexp(0.0, -margins)))
 
 # Step 10 - reward_accuracy (not yet solved)
 # TODO: implement
