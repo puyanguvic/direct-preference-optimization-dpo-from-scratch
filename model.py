@@ -79,8 +79,52 @@ def policy_sequence_logprob(params, token_ids, mask):
 
     return masked_sequence_logprob(token_logprobs, mask)
 
-# Step 8 - sequence_logprob_grad (not yet solved)
-# TODO: implement
+# Step 8 - sequence_logprob_grad
+import numpy as np
+
+def sequence_logprob_grad(params, token_ids, mask):
+    token_ids = np.asarray(token_ids, dtype=np.int64)
+    mask = np.asarray(mask, dtype=np.float64)
+
+    embed = params["embed"]
+    W_out = params["W_out"]
+    b_out = params["b_out"]
+
+    # 前向计算
+    hidden = embed[token_ids]                  # (B, T, D)
+    logits = hidden @ W_out + b_out            # (B, T, V)
+
+    shifted = logits - np.max(logits, axis=-1, keepdims=True)
+    exp_logits = np.exp(shifted)
+    probs = exp_logits / exp_logits.sum(axis=-1, keepdims=True)
+
+    # d log P(token) / d logits = one_hot(token) - probs
+    V = W_out.shape[1]
+    grad_logits = -probs
+    grad_logits.reshape(-1, V)[
+        np.arange(token_ids.size), token_ids.ravel()
+    ] += 1.0
+    grad_logits *= mask[..., None]
+
+    # 输出投影与偏置的梯度
+    D = W_out.shape[0]
+    grad_W_out = hidden.reshape(-1, D).T @ grad_logits.reshape(-1, V)
+    grad_b_out = grad_logits.sum(axis=(0, 1))
+
+    # embedding 的梯度：同一 token 多次出现时，需要累加
+    grad_hidden = grad_logits @ W_out.T        # (B, T, D)
+    grad_embed = np.zeros_like(embed)
+    np.add.at(
+        grad_embed,
+        token_ids.ravel(),
+        grad_hidden.reshape(-1, D),
+    )
+
+    return {
+        "embed": grad_embed,
+        "W_out": grad_W_out,
+        "b_out": grad_b_out,
+    }
 
 # Step 9 - bradley_terry_loss (not yet solved)
 # TODO: implement
