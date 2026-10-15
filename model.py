@@ -60,8 +60,11 @@ def init_policy_params(vocab_size, d_model, rng=None):
         "b_out": np.zeros(vocab_size, dtype=np.float64),
     }
 
-# Step 6 - policy_token_logits (not yet solved)
-# TODO: implement
+# Step 6 - policy_token_logits
+def policy_token_logits(params, token_ids):
+    token_ids = np.asarray(token_ids, dtype=np.int64)
+    hidden = params["embed"][token_ids]
+    return hidden @ params["W_out"] + params["b_out"]
 
 # Step 7 - policy_sequence_logprob (not yet solved)
 # TODO: implement
