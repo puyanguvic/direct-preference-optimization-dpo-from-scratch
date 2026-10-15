@@ -39,8 +39,15 @@ def gather_token_logprobs(log_probs, token_ids):
         axis=-1
     ).squeeze(-1)
 
-# Step 4 - masked_sequence_logprob (not yet solved)
-# TODO: implement
+# Step 4 - masked_sequence_logprob
+def masked_sequence_logprob(token_logprobs, mask):
+    token_logprobs = np.asarray(token_logprobs)
+    mask = np.asarray(mask, dtype=bool)
+
+    return np.sum(
+        np.where(mask, token_logprobs, 0.0),
+        axis=-1
+    )
 
 # Step 5 - init_policy_params (not yet solved)
 # TODO: implement
