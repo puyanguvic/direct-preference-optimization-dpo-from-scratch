@@ -66,8 +66,18 @@ def policy_token_logits(params, token_ids):
     hidden = params["embed"][token_ids]
     return hidden @ params["W_out"] + params["b_out"]
 
-# Step 7 - policy_sequence_logprob (not yet solved)
-# TODO: implement
+# Step 7 - policy_sequence_logprob
+import numpy as np
+
+def policy_sequence_logprob(params, token_ids, mask):
+    token_ids = np.asarray(token_ids, dtype=np.int64)
+
+    logits = policy_token_logits(params, token_ids)
+    log_probs = log_softmax(logits, axis=-1)
+
+    token_logprobs = gather_token_logprobs(log_probs, token_ids)
+
+    return masked_sequence_logprob(token_logprobs, mask)
 
 # Step 8 - sequence_logprob_grad (not yet solved)
 # TODO: implement
